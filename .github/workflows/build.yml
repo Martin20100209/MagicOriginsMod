@@ -1,0 +1,86 @@
+name: Build Magic Origins Mod
+
+on:
+  push:
+    branches: [ main, auto-build ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    - name: Build with Gradle
+      run: ./gradlew build
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: magic-origins-mod
+        path: build/libs/*.jar
+        
+    - name: Create Release
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v1.0.0-${{ github.sha }}
+        name: Magic Origins Mod v1.0.0
+        body: |
+          # Magic Origins Mod - Ready to Download!
+          
+          ## Features
+          - 🎯 **Automatic Origin Assignment** - No player choice, origins assigned by username
+          - 🏆 **Warden Enhancement** - 100% Totem of Undying drop rate
+          - 🔗 **Origins Mod Compatible** - Works seamlessly with Origins mod
+          
+          ## Player Assignments
+          - **Fishy01003** → Water Origin
+          - **52bm** → Nature Origin
+          - **Green_boii** → Swamp Origin
+          - **Balo01003** → Stone Origin
+          - **Temsync** → Echo Origin
+          - **Polocol** → Fire Origin
+          - **Snowfester** → Frost Origin
+          - **Fkoe** → Amphibian Origin
+          - **_Kitax** → Shadow Origin
+          
+          ## Installation
+          1. Download the `.jar` file below
+          2. Place it in your server's `mods` folder
+          3. Install Origins mod (recommended)
+          4. Start your server - origins assign automatically!
+          
+          ## Requirements
+          - Minecraft 1.21.x
+          - Forge 47.3.0+
+          - Java 21
+        files: build/libs/*.jar
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
